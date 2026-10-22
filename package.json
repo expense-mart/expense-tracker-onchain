@@ -1,0 +1,35 @@
+{
+  "name": "@expense-mart/onchain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read-only Stellar payment processing preview",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "example": "npm run build && node examples/process-fixture.mjs",
+    "verify": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "17.3.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}
