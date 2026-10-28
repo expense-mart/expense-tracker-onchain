@@ -30,6 +30,8 @@ const result = processStellarPayments({ walletAddress: publicAddress, payments: 
 
 Other exports: `validateStellarAddress`, `normalizeStellarPayment`, `classifyTransaction`, `summarizeTransactions`, `fetchStellarPayments`, runtime raw/normalized schemas, inferred transaction types, `ProcessingError` and `HorizonError`. The convenience `fetchStellarPayments` returns an array, defaulting to testnet; if its bounded fetch has more history it fails rather than silently presenting a complete array. Cursor-aware integrations should use `fetchStellarActivity`.
 
+`validateStellarAddress` returns `{ success: true, address }` for valid public G-addresses, or `{ success: false, error: { code: "INVALID_WALLET_ADDRESS", message } }`. Empty or whitespace-only strings receive a required-address message; other strings containing whitespace receive a whitespace-specific message. Addresses are never trimmed or repaired. Malformed addresses receive a generic validation message, and errors never echo the input. Processing and fetching reject invalid wallet addresses with the same code and message in a `ProcessingError`.
+
 ### Live fetch contract
 
 `fetchStellarActivity(address, options?, request?)` validates checksum G-addresses and reads only official `https://horizon-testnet.stellar.org` or `https://horizon.stellar.org`. Options select `testnet`/`public`, numeric cursor, page size 1–200 and max pages 1–10 (default 100 × 5). Each request has a 12-second timeout, requests ascending successful operations with joined transaction metadata, and never follows returned paging URLs or accepts arbitrary hosts. The injected `request` exists for deterministic adapter tests; production uses native fetch.

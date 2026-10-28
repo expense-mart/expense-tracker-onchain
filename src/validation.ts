@@ -10,14 +10,23 @@ export type ValidationResult =
     };
 
 export function validateStellarAddress(address: unknown): ValidationResult {
-  if (typeof address === "string" && StrKey.isValidEd25519PublicKey(address)) {
+  if (
+    typeof address === "string" &&
+    !/\s/u.test(address) &&
+    StrKey.isValidEd25519PublicKey(address)
+  ) {
     return { success: true, address };
   }
   return {
     success: false,
     error: {
       code: "INVALID_WALLET_ADDRESS",
-      message: "Enter a valid Stellar public wallet address.",
+      message:
+        typeof address === "string" && address.trim().length === 0
+          ? "Enter a Stellar public wallet address."
+          : typeof address === "string" && /\s/u.test(address)
+            ? "Enter a Stellar public wallet address without whitespace."
+            : "Enter a valid Stellar public wallet address.",
     },
   };
 }

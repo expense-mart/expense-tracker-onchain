@@ -16,19 +16,65 @@ const clone = () => structuredClone(fixture);
 const code = (expected) => (error) =>
   error instanceof ProcessingError && error.code === expected;
 
-test("validates public address checksums without echoing invalid/private input", () => {
-  assert.equal(validateStellarAddress(fixture.walletAddress).success, true);
+test("valid public addresses are returned unchanged", () => {
+  assert.deepEqual(validateStellarAddress(fixture.walletAddress), {
+    success: true,
+    address: fixture.walletAddress,
+  });
+});
+
+test("malformed addresses return safe structured errors", () => {
   for (const value of [
     null,
-    "",
+    undefined,
+    123,
+    {},
+    "invalid",
     "S".repeat(56),
     "G".repeat(56),
-    `${fixture.walletAddress} `,
+    fixture.walletAddress.toLowerCase(),
     fixture.walletAddress.slice(0, -1) + "A",
   ]) {
-    const result = validateStellarAddress(value);
-    assert.equal(result.success, false);
-    assert.deepEqual(Object.keys(result.error), ["code", "message"]);
+    assert.deepEqual(validateStellarAddress(value), {
+      success: false,
+      error: {
+        code: "INVALID_WALLET_ADDRESS",
+        message: "Enter a valid Stellar public wallet address.",
+      },
+    });
+  }
+});
+
+test("empty and whitespace-containing addresses preserve validation errors in processing", () => {
+  for (const [values, message] of [
+    [["", " ", "\t\r\n", "\u00a0"], "Enter a Stellar public wallet address."],
+    [
+      [
+        ` ${fixture.walletAddress}`,
+        `${fixture.walletAddress} `,
+        `\t${fixture.walletAddress}\r\n`,
+        `${fixture.walletAddress}\n`,
+        `${fixture.walletAddress}\u00a0`,
+        `${fixture.walletAddress.slice(0, 10)} ${fixture.walletAddress.slice(10)}`,
+      ],
+      "Enter a Stellar public wallet address without whitespace.",
+    ],
+    [["invalid"], "Enter a valid Stellar public wallet address."],
+  ]) {
+    for (const walletAddress of values) {
+      const error = { code: "INVALID_WALLET_ADDRESS", message };
+      assert.deepEqual(validateStellarAddress(walletAddress), {
+        success: false,
+        error,
+      });
+      assert.throws(
+        () => processStellarPayments({ walletAddress, payments: [] }),
+        (actual) =>
+          actual instanceof ProcessingError &&
+          actual.code === error.code &&
+          actual.message === error.message,
+      );
+    }
   }
 });
 
